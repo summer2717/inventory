@@ -14,12 +14,12 @@
         @keyframes flash { 0% { background: rgba(59, 130, 246, 0.4); } 100% { background: transparent; } }
     </style>
 </head>
-<body class="p-4 font-sans max-w-md mx-auto min-h-screen pb-32">
+<body class="p-4 font-sans max-w-md mx-auto min-h-screen pb-32 text-slate-100">
 
     <header class="mb-4 flex justify-between items-end">
         <div>
             <h1 class="text-2xl font-black text-yellow-500 italic leading-none">CUPICHO</h1>
-            <p class="text-[10px] text-slate-500 tracking-widest uppercase font-bold">Inventory Expert V2.9</p>
+            <p class="text-[10px] text-slate-500 tracking-widest uppercase font-bold">Smart Inventory V2.9</p>
         </div>
         <div id="cam-status" class="text-[9px] bg-blue-900/30 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 font-bold">系統就緒</div>
     </header>
@@ -27,25 +27,24 @@
     <div id="reader" class="mb-4 shadow-2xl relative">
         <div id="cam-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10 text-center p-6">
             <button onclick="initScanner()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl mb-2">📷 開啟相機</button>
+            <p class="text-slate-500 text-[10px]">點擊後請允許相機權限</p>
         </div>
     </div>
 
     <section class="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 mb-4 shadow-2xl">
         <div class="text-center mb-4 min-h-[70px] flex flex-col justify-center border-b border-slate-800 pb-2">
             <div id="display-name" class="text-lg font-bold text-white leading-tight">準備掃描</div>
-            <div id="display-id" class="text-xs text-yellow-600 font-mono mt-2 uppercase tracking-tighter italic">ID: ---</div>
+            <div id="display-id" class="text-xs text-yellow-600 font-mono mt-2 uppercase">ID: ---</div>
         </div>
 
         <div class="grid grid-cols-3 gap-2 mt-4">
             <div class="col-span-2">
                 <input type="text" id="barcode-input" oninput="processBarcode(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white outline-none font-mono" placeholder="條碼">
             </div>
-            <input type="number" id="qty-input" value="1" class="bg-slate-950 border border-slate-700 rounded-xl p-4 text-2xl font-black text-center text-yellow-500">
-            
-            <button id="add-btn" onclick="addEntry()" class="col-span-3 btn-gold py-4 rounded-xl active:scale-95 transition-all text-lg shadow-lg">確認送出</button>
-            
-            <button id="bind-trigger" onclick="openSearch()" class="hidden col-span-3 bg-blue-600/20 border border-blue-500 text-blue-400 py-3 rounded-xl font-bold text-sm animate-pulse">
-                🔍 找不到條碼？搜尋品名來綁定
+            <input type="number" id="qty-input" value="1" class="bg-slate-950 border border-slate-700 rounded-xl p-4 text-2xl font-black text-center text-yellow-500 outline-none">
+            <button onclick="addEntry()" class="col-span-3 btn-gold py-4 rounded-xl active:scale-95 transition-all text-lg shadow-lg">確認送出</button>
+            <button id="bind-trigger" onclick="openSearch()" class="hidden col-span-3 bg-blue-600/20 border border-blue-500 text-blue-400 py-3 rounded-xl font-bold text-sm mt-1">
+                🔍 找不到？搜尋品名綁定
             </button>
         </div>
     </section>
@@ -53,7 +52,7 @@
     <section>
         <div class="flex justify-between items-center mb-4 px-1">
             <h2 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">History</h2>
-            <button onclick="exportCSV()" class="text-xs font-bold text-emerald-500">匯出 CSV</button>
+            <button onclick="exportCSV()" class="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/20">匯出 CSV</button>
         </div>
         <div id="inventory-list" class="space-y-2 text-sm"></div>
     </section>
@@ -61,11 +60,135 @@
     <div class="fixed bottom-6 left-4 right-4 max-w-md mx-auto flex gap-2 z-40">
         <button onclick="clearData()" class="bg-slate-900 border border-slate-800 text-slate-600 px-5 py-4 rounded-2xl text-[10px] font-bold">RESET</button>
         <div class="flex-1 bg-yellow-500 p-4 rounded-2xl flex justify-between items-center px-8 shadow-xl">
-            <span class="text-black font-bold text-xs">Total</span>
+            <span class="text-black font-bold text-sm">TOTAL</span>
             <span id="total-count" class="text-2xl font-black text-black">0</span>
         </div>
     </div>
 
     <div id="search-modal" class="fixed inset-0 bg-slate-950/98 z-[60] hidden flex flex-col p-6 backdrop-blur-md">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white">搜尋
+            <h3 class="text-xl font-bold text-white tracking-tight">搜尋商品主檔</h3>
+            <button onclick="closeSearch()" class="text-slate-400 text-4xl p-2">&times;</button>
+        </div>
+        <input type="text" id="master-search-input" oninput="filterMaster()" class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-5 mb-6 outline-none focus:border-yellow-500 text-white text-lg" placeholder="輸入關鍵字...">
+        <div id="master-results" class="flex-1 overflow-y-auto space-y-3 pb-20"></div>
+    </div>
+
+    <script>
+        // --- 商品資料庫 (382筆) ---
+        const masterData = [{"id": "46", "barcode": "8026861046751", "name": "Domori克里歐羅70%黑巧克力50g"}, {"id": "1340", "barcode": "8026861052554", "name": "Domori克里歐羅產區杏仁蜂蜜巧克"}, {"id": "70", "barcode": "8026861049042", "name": "Domori72%黑巧克力裹薑糖40g"}, {"id": "151", "barcode": "8413907982706", "name": "阿瑪利耶慕夏70%迦納黑巧克力"}, {"id": "1590", "barcode": "1590", "name": "甜點-檸檬蛋白霜塔(片)"}, {"id": "1595", "barcode": "1595", "name": "甜點-經典蘋果塔(片)"}, {"id": "752", "barcode": "5000277003280", "name": "帝王15年蘇格蘭威士忌750ml"}, {"id": "728", "barcode": "5000277000258", "name": "帝王12年蘇格蘭威士忌700ml"}, {"id": "730", "barcode": "5000277002573", "name": "帝王18年蘇格蘭威士ི750ml"}, {"id": "150", "barcode": "8413907982607", "name": "阿瑪利耶慕夏32%迦納牛奶巧克力"}, {"id": "315", "barcode": "8006070001004", "name": "Gavioli無酒精葡萄氣泡飲紅750m"}, {"id": "320", "barcode": "8006070101001", "name": "Gavioli無酒精葡萄氣泡飲白750m"}, {"id": "316", "barcode": "8006070001509", "name": "Gavioli無酒精蜜桃氣泡飲750ml"}, {"id": "1344", "barcode": "8026861052561", "name": "Domori克里歐羅產區焦糖海鹽巧"}, {"id": "1283", "barcode": "8026861051939", "name": "Domori72%黑巧克力裹柳橙150g"}, {"id": "1348", "barcode": "8026861052578", "name": "Domori克里歐羅產區莓果巧克力"}, {"id": "1342", "barcode": "8026861052547", "name": "Domori克里歐羅產區開心果巧克力"}, {"id": "1182", "barcode": "8026861051519", "name": "Domori100%巧克力裹開心果150g"}, {"id": "1380", "barcode": "4711311540321", "name": "巧克力方塊禮盒-黑巧克力(6入)"}, {"id": "1381", "barcode": "4711311540338", "name": "巧克力方塊禮盒-牛奶巧克力(6入)"}, {"id": "1383", "barcode": "4711311540352", "name": "巧克力方塊禮盒-覆盆莓巧克力"}, {"id": "1382", "barcode": "4711311540345", "name": "巧克力方塊禮盒-鹽之花巧克力"}, {"id": "1384", "barcode": "4711311540369", "name": "巧克力方塊禮盒-堅果脆片巧克力"}, {"id": "1385", "barcode": "4711311540376", "name": "巧克力方塊禮盒-經典5入裝"}, {"id": "1386", "barcode": "4711311540383", "name": "巧克力方塊禮盒-黑巧與牛奶(10入)"}, {"id": "1274", "barcode": "8026861051960", "name": "Domori黑巧克力裹咖啡豆150g"}, {"id": "709", "barcode": "8026861046102", "name": "Domori70%產區黑巧克力25g"}, {"id": "6221", "barcode": "4901625021333", "name": "扇屋點心起司(新)"}, {"id": "6205", "barcode": "4540624403337", "name": "草莓夾心巧克力"}, {"id": "6226", "barcode": "4901330646197", "name": "加樂比薯條杯-沙拉口味"}, {"id": "6166", "barcode": "4901620300914", "name": "日清奶油酥餅"}, {"id": "6142", "barcode": "4902555171586", "name": "不二家千層派"}, {"id": "6177", "barcode": "4902720132640", "name": "森永彈珠汽水糖"}, {"id": "6183", "barcode": "4902777002590", "name": "明治巧克力"}, {"id": "6214", "barcode": "4902777010243", "name": "明治竹筍造型巧克力"}, {"id": "6204", "barcode": "4902777026336", "name": "明治阿波羅巧克力"}, {"id": "6164", "barcode": "4902777116501", "name": "明治香菇造型巧克力"}, {"id": "6133", "barcode": "4970694262103", "name": "井村屋紅豆羊羹"}, {"id": "6132", "barcode": "4970694262110", "name": "井村屋栗子羊羹"}, {"id": "6134", "barcode": "4970694262127", "name": "井村屋抹茶羊羹"}];
+
+        let inventory = JSON.parse(localStorage.getItem('cup_inv')) || [];
+        let manualMappings = JSON.parse(localStorage.getItem('cup_binds')) || {};
+        let html5QrCode;
+
+        async function initScanner() {
+            try {
+                document.getElementById('cam-placeholder').classList.add('hidden');
+                html5QrCode = new Html5Qrcode("reader");
+                await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (text) => {
+                    playFeedback();
+                    document.getElementById('barcode-input').value = text;
+                    processBarcode(text);
+                });
+                document.getElementById('cam-status').innerText = "相機已啟動";
+                document.getElementById('cam-status').className = "text-[9px] bg-emerald-900/30 text-emerald-500 px-3 py-1 rounded-full border border-emerald-500/30 font-bold";
+            } catch (err) { alert("無法啟動相機: " + err); }
+        }
+
+        function processBarcode(code) {
+            if(!code) return;
+            const cleanCode = code.trim();
+            const item = masterData.find(m => String(m.barcode).trim() === cleanCode) || manualMappings[cleanCode];
+            
+            if (item) {
+                document.getElementById('display-name').innerText = item.name;
+                document.getElementById('display-id').innerText = "貨號: " + item.id;
+                document.getElementById('display-name').classList.remove('text-red-500');
+                document.getElementById('bind-trigger').classList.add('hidden');
+            } else {
+                document.getElementById('display-name').innerText = "⚠️ 找不到商品";
+                document.getElementById('display-id').innerText = cleanCode;
+                document.getElementById('display-name').classList.add('text-red-500');
+                document.getElementById('bind-trigger').classList.remove('hidden');
+            }
+        }
+
+        function addEntry() {
+            const code = document.getElementById('barcode-input').value.trim();
+            const qty = parseInt(document.getElementById('qty-input').value);
+            if(!code || isNaN(qty)) return;
+
+            const item = masterData.find(m => String(m.barcode).trim() === code) || manualMappings[code] || { id: "NEW", name: "未知商品" };
+            const idx = inventory.findIndex(i => i.barcode === code);
+            
+            if (idx > -1) { inventory[idx].qty += qty; } 
+            else { inventory.unshift({ id: item.id, barcode: code, name: item.name, qty: qty, time: new Date().toLocaleTimeString() }); }
+            
+            saveAndRender();
+            document.getElementById('barcode-input').value = "";
+            document.getElementById('qty-input').value = 1;
+            document.getElementById('display-name').innerText = "等待掃描...";
+        }
+
+        function openSearch() {
+            document.getElementById('search-modal').classList.remove('hidden');
+            document.getElementById('master-search-input').focus();
+            filterMaster();
+        }
+
+        function closeSearch() { document.getElementById('search-modal').classList.add('hidden'); }
+
+        function filterMaster() {
+            const query = document.getElementById('master-search-input').value.toLowerCase();
+            const resultsDiv = document.getElementById('master-results');
+            resultsDiv.innerHTML = '';
+            masterData.filter(m => (m.name+m.id).toLowerCase().includes(query)).slice(0, 50).forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-900 p-5 rounded-2xl border border-slate-800 flex justify-between items-center active:bg-yellow-500 active:text-black";
+                div.innerHTML = `<div><div class="font-bold">${item.name}</div><div class="text-[10px] opacity-60">${item.id}</div></div><div class="text-xs font-bold border border-current px-2 py-1 rounded">綁定</div>`;
+                div.onclick = () => {
+                    const barcode = document.getElementById('barcode-input').value;
+                    manualMappings[barcode] = item;
+                    localStorage.setItem('cup_binds', JSON.stringify(manualMappings));
+                    closeSearch();
+                    processBarcode(barcode);
+                };
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        function playFeedback() {
+            document.body.classList.add('flash-active');
+            setTimeout(() => document.body.classList.remove('flash-active'), 300);
+            const ac = new (window.AudioContext || window.webkitAudioContext)();
+            const os = ac.createOscillator(); os.connect(ac.destination);
+            os.frequency.value = 1000; os.start(); os.stop(ac.currentTime + 0.1);
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('cup_inv', JSON.stringify(inventory));
+            const container = document.getElementById('inventory-list');
+            container.innerHTML = '';
+            inventory.forEach((item, idx) => {
+                container.innerHTML += `<div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center mb-2">
+                    <div><div class="font-bold text-slate-200">${item.name}</div><div class="text-[9px] text-slate-600">${item.id} | ${item.barcode}</div></div>
+                    <div class="text-xl font-bold text-yellow-500">${item.qty}</div>
+                    <button onclick="inventory.splice(${idx},1);saveAndRender();" class="text-slate-700 ml-4 p-2">×</button>
+                </div>`;
+            });
+            document.getElementById('total-count').innerText = inventory.reduce((a, b) => a + b.qty, 0);
+        }
+
+        function clearData() { if(confirm("確定清空所有紀錄？")) { inventory = []; saveAndRender(); } }
+        function exportCSV() {
+            let csv = "\ufeff貨號,條碼,品名,數量,時間\n";
+            inventory.forEach(i => csv += `"${i.id}","${i.barcode}","${i.name}",${i.qty},"${i.time}"\n`);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+            a.download = `CUPICHO_Inventory_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+        }
+        saveAndRender();
+    </script>
+</body>
+</html>
