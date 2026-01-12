@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cupicho 專業盤點系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        #reader { border: 2px solid #334155 !important; border-radius: 12px; overflow: hidden; }
+        #reader__dashboard_section_csr button {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            padding: 8px 16px !important;
+            border-radius: 8px !important;
+            margin: 10px 0 !important;
+        }
+        .btn-active:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="p-4 font-sans max-w-md mx-auto">
+
+    <header class="mb-6 text-center">
+        <h1 class="text-2xl font-bold text-blue-400">行動盤點工具</h1>
+        <p class="text-slate-400 text-sm">Offline Local Storage System</p>
+    </header>
+
+    <section class="mb-6">
+        <div id="reader" class="w-full bg-slate-800"></div>
+        <div id="scan-status" class="mt-2 text-center text-sm font-medium py-1 rounded transition-all duration-300 opacity-0">
+            掃描成功！
+        </div>
+    </section>
+
+    <section class="bg-slate-800 p-4 rounded-xl shadow-lg mb-6 border border-slate-700">
+        <div class="grid grid-cols-1 gap-4">
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">條碼編號</label>
+                <input type="text" id="barcode-input" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-lg focus:outline-none focus:border-blue-500" placeholder="掃描或手動輸入">
+            </div>
+            <div class="flex gap-4">
+                <div class="flex-1">
+                    <label class="block text-sm text-slate-400 mb-1">數量</label>
+                    <input type="number" id="qty-input" value="1" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-lg focus:outline-none focus:border-blue-500 text-center">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="addEntry()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg btn-active transition-all shadow-lg">新增</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="flex gap-2 mb-6">
+        <button onclick="exportCSV()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg font-medium btn-active flex items-center justify-center gap-2">
+            <span>📊 匯出 CSV</span>
+        </button>
+        <button onclick="clearData()" class="bg-slate-700 hover:bg-red-900 text-slate-300 py-3 px-4 rounded-lg font-medium btn-active transition-colors">
+            清空
+        </button>
+    </div>
+
+    <section>
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-lg font-semibold">盤點清單</h2>
+            <span id="total-count" class="bg-slate-700 px-2 py-1 rounded text-xs text-slate-300">共 0 筆</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="text-slate-400 text-sm border-b border-slate-700">
+                    <tr>
+                        <th class="py-2 font-medium">條碼</th>
+                        <th class="py-2 font-medium text-center w-16">數量</th>
+                        <th class="py-2 font-medium text-right w-12">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-list" class="divide-y divide-slate-800">
+                    </tbody>
+            </table>
+        </div>
+    </section>
+
+    <script>
+        let inventory = JSON.parse(localStorage.getItem('cupicho_inventory')) || [];
+        const barcodeInput = document.getElementById('barcode-input');
+        const qtyInput = document.getElementById('qty-input');
+        const listContainer = document.getElementById('inventory-list');
+        const statusMsg = document.getElementById('scan-status');
+
+        // --- 初始化相機 ---
+        const html5QrCode = new Html5Qrcode("reader");
+        const qrConfig = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+        function onScanSuccess(decodedText, decodedResult) {
+            playSuccessFeedback();
+            barcodeInput.value = decodedText;
+            showStatus("掃描成功：" + decodedText, "bg-emerald-500");
+            
+            // 自動跳轉到數量欄位
+            qtyInput.focus();
+            qtyInput.select();
+        }
+
+        html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
+
+        // --- 反饋功能 (震動 + 聲音) ---
+        function playSuccessFeedback() {
+            if (navigator.vibrate) navigator.vibrate(150);
+            
+            // Web Audio API 嗶一聲
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // --- 資料邏輯 ---
+        function addEntry() {
+            const barcode = barcodeInput.value.trim();
+            const qty = parseInt(qtyInput.value);
+
+            if (!barcode || isNaN(qty) || qty <= 0) {
+                alert("請輸入正確的條碼與數量");
+                return;
+            }
+
+            const existingIdx = inventory.findIndex(item => item.barcode === barcode);
+            
+            if (existingIdx > -1) {
+                inventory[existingIdx].qty += qty;
+                inventory[existingIdx].time = new Date().toLocaleString();
+            } else {
+                inventory.unshift({
+                    barcode: barcode,
+                    qty: qty,
+                    time: new Date().toLocaleString()
+                });
+            }
+
+            saveAndRender();
+            barcodeInput.value = "";
+            qtyInput.value = "1";
+            barcodeInput.focus();
+        }
+
+        function deleteItem(index) {
+            if (confirm("確定刪除此筆資料？")) {
+                inventory.splice(index, 1);
+                saveAndRender();
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('cupicho_inventory', JSON.stringify(inventory));
+            renderList();
+        }
+
+        function renderList() {
+            listContainer.innerHTML = '';
+            document.getElementById('total-count').innerText = `共 ${inventory.length} 筆`;
+            
+            inventory.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.className = 'group animate-in fade-in duration-300';
+                row.innerHTML = `
+                    <td class="py-4">
+                        <div class="font-medium text-slate-200">${item.barcode}</div>
+                        <div class="text-xs text-slate-500">${item.time}</div>
+                    </td>
+                    <td class="py-4 text-center font-bold text-blue-400 text-lg">${item.qty}</td>
+                    <td class="py-4 text-right">
+                        <button onclick="deleteItem(${index})" class="text-slate-500 hover:text-red-500 p-2">✕</button>
+                    </td>
+                `;
+                listContainer.appendChild(row);
+            });
+        }
+
+        // --- 匯出 CSV ---
+        function exportCSV() {
+            if (inventory.length === 0) return alert("目前沒有資料可匯出");
+
+            let csvContent = "\ufeff"; // BOM for Excel UTF-8
+            csvContent += "條碼,數量,最後更新時間\n";
+            
+            inventory.forEach(item => {
+                csvContent += `${item.barcode},${item.qty},${item.time}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const date = new Date().toISOString().slice(0, 10);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `盤點清單_${date}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clearData() {
+            if (confirm("🚨 警告：這將永久刪除手機內所有的盤點紀錄，確定嗎？")) {
+                inventory = [];
+                saveAndRender();
+            }
+        }
+
+        function showStatus(text, bgColor) {
+            statusMsg.innerText = text;
+            statusMsg.className = `mt-2 text-center text-sm font-medium py-1 rounded transition-all duration-300 opacity-100 ${bgColor}`;
+            setTimeout(() => { statusMsg.classList.add('opacity-0'); }, 2000);
+        }
+
+        // 初始載入
+        renderList();
+    </script>
+</body>
+</html>
