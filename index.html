@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CUPICHO PRO V3.8</title>
+    <title>CUPICHO PRO V3.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { background-color: #020617; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #020617; color: #f8fafc; -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
         #reader { border: none !important; background: #000; height: 100%; width: 100%; }
-        /* 彈窗樣式 */
         .modal-view { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); backdrop-filter: blur(20px); z-index: 9999; flex-direction: column; padding: 24px; }
         .show-modal { display: flex !important; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(50%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .btn-gold { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: #000; font-weight: 800; }
+        @keyframes slideUp { from { transform: translateY(40%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .btn-gold { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; font-weight: 800; }
         .flash-active { animation: flash 0.3s ease-out; }
-        @keyframes flash { 0% { background: rgba(234, 179, 8, 0.4); } 100% { background: transparent; } }
+        @keyframes flash { 0% { background: rgba(251, 191, 36, 0.5); } 100% { background: transparent; } }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen flex flex-col">
 
     <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-[1100]"></div>
 
-    <header class="p-4 flex justify-between items-center bg-slate-950/80 border-b border-slate-900 sticky top-0 z-[100]">
+    <header class="p-4 flex justify-between items-center bg-slate-950 border-b border-slate-900 sticky top-0 z-[100]">
         <div>
             <h1 class="text-xl font-black text-yellow-500 italic leading-none">CUPICHO</h1>
-            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Enhanced Sensitivity V3.8</p>
+            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest uppercase">Focus Overdrive V3.9</p>
         </div>
         <button onclick="openAdmin()" class="bg-slate-900 text-yellow-500 px-3 py-2 rounded-xl border border-slate-800 text-xs font-bold">⚙️ 管理</button>
     </header>
@@ -33,33 +32,33 @@
     <section class="relative w-full aspect-square bg-black overflow-hidden border-b border-slate-900">
         <div id="reader"></div>
         <div id="cam-gate" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950">
-            <button onclick="initScanner()" class="bg-yellow-500 text-black px-12 py-5 rounded-2xl font-black text-xl shadow-xl active:scale-95">
-                📷 啟動掃描
+            <button onclick="initScanner()" class="bg-yellow-500 text-black px-12 py-5 rounded-2xl font-black text-xl shadow-xl">
+                📷 啟動極速掃描
             </button>
         </div>
         <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div class="w-[300px] h-[180px] border-2 border-yellow-500/20 rounded-2xl relative">
-                <div class="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-yellow-500 rounded-tl-lg"></div>
-                <div class="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-yellow-500 rounded-tr-lg"></div>
-                <div class="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-yellow-500 rounded-bl-lg"></div>
-                <div class="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-yellow-500 rounded-br-lg"></div>
-                <div class="absolute left-4 right-4 h-[2px] bg-red-500/50 shadow-[0_0_10px_red] animate-[scanLine_2s_infinite]"></div>
+            <div class="w-[280px] h-[160px] border-2 border-yellow-500/20 rounded-2xl relative">
+                <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-yellow-500 rounded-tl-lg"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-yellow-500 rounded-tr-lg"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-yellow-500 rounded-bl-lg"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-yellow-500 rounded-br-lg"></div>
+                <div class="absolute left-2 right-2 h-[1.5px] bg-yellow-400 shadow-[0_0_15px_#facc15] animate-[laser_2.5s_infinite]"></div>
             </div>
         </div>
     </section>
 
     <style>
-        @keyframes scanLine { 0% { top: 10%; } 50% { top: 90%; } 100% { top: 10%; } }
+        @keyframes laser { 0% { top: 15%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 85%; opacity: 0; } }
     </style>
 
     <section class="p-4 -mt-10 relative z-30">
         <div class="bg-slate-900 border border-slate-800 rounded-[32px] p-6 shadow-2xl">
             <div class="text-center mb-6 border-b border-slate-800 pb-4">
-                <div id="display-name" class="text-xl font-bold text-white mb-1">準備盤點</div>
+                <div id="display-name" class="text-lg font-bold text-white mb-1">準備中...</div>
                 <div id="display-id" class="text-xs text-yellow-600 font-mono tracking-widest uppercase">ID: ---</div>
             </div>
             <div class="grid grid-cols-4 gap-3">
-                <input type="text" id="barcode-input" oninput="handleManualInput(this.value)" class="col-span-3 bg-slate-950 border border-slate-700 rounded-2xl p-4 text-white font-mono outline-none focus:border-yellow-500 transition-all" placeholder="條碼號碼">
+                <input type="text" id="barcode-input" oninput="handleManualInput(this.value)" class="col-span-3 bg-slate-950 border border-slate-700 rounded-2xl p-4 text-white font-mono outline-none focus:border-yellow-500" placeholder="掃描或輸入條碼">
                 <input type="number" id="qty-input" value="1" class="col-span-1 bg-slate-950 border border-slate-700 rounded-2xl p-4 text-2xl font-black text-center text-yellow-500 outline-none">
                 <button onclick="addRecord()" class="col-span-4 btn-gold py-5 rounded-2xl active:scale-95 text-xl shadow-lg">確認送出</button>
             </div>
@@ -68,7 +67,7 @@
 
     <section class="p-4 flex-1 pb-32">
         <div class="flex justify-between items-center mb-4 px-2">
-            <h2 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Recent Activity</h2>
+            <h2 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">歷史紀錄</h2>
             <button onclick="exportCSV()" class="text-xs font-bold text-emerald-500">匯出 CSV</button>
         </div>
         <div id="inventory-list" class="space-y-3"></div>
@@ -77,28 +76,28 @@
     <div class="fixed bottom-6 left-6 right-6 flex gap-3 z-[100]">
         <button onclick="clearAll()" class="bg-slate-900 border border-slate-800 text-slate-500 px-6 py-4 rounded-3xl text-[10px] font-bold">RESET</button>
         <div class="flex-1 bg-yellow-500 p-4 rounded-3xl flex justify-between items-center px-8 shadow-2xl">
-            <span class="text-black font-bold text-xs uppercase">Total</span>
-            <span id="total-count" class="text-2xl font-black text-black">0</span>
+            <span class="text-black font-bold text-xs uppercase">Items</span>
+            <span id="total-count" class="text-2xl font-black text-black leading-none">0</span>
         </div>
     </div>
 
     <div id="bind-modal" class="modal-view">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white italic">⚠️ 找不到條碼</h3>
+            <h3 class="text-xl font-bold text-white">⚠️ 找不到條碼</h3>
             <button onclick="closeModal('bind-modal')" class="text-slate-500 text-4xl p-2">&times;</button>
         </div>
         <div class="bg-yellow-500/10 border border-yellow-500/30 p-5 rounded-2xl mb-6">
-            <p class="text-[9px] text-yellow-600 font-bold uppercase mb-1 tracking-widest">目前掃到</p>
+            <p class="text-[9px] text-yellow-600 font-bold uppercase mb-1">掃描碼</p>
             <p id="unknown-barcode-display" class="text-2xl font-mono font-bold text-white"></p>
         </div>
-        <input type="text" id="bind-search-input" oninput="filterBindSearch()" class="w-full bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-6 text-white" placeholder="輸入商品名稱搜尋...">
+        <input type="text" id="bind-search-input" oninput="filterBindSearch()" class="w-full bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-6 text-white" placeholder="輸入關鍵字以綁定新條碼...">
         <div id="bind-results" class="flex-1 overflow-y-auto space-y-2 mb-4"></div>
-        <button onclick="openManualCreate()" class="w-full bg-slate-800 text-blue-400 py-4 rounded-2xl font-bold text-sm">全新商品？點此手動新增</button>
+        <button onclick="openManualCreate()" class="w-full bg-slate-800 text-blue-400 py-4 rounded-2xl font-bold text-sm">此品項不在資料庫？點此新增</button>
     </div>
 
     <div id="admin-modal" class="modal-view">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white italic">⚙️ 資料庫管理</h3>
+            <h3 class="text-xl font-bold text-white">⚙️ 資料庫管理</h3>
             <button onclick="closeModal('admin-modal')" class="text-slate-500 text-4xl p-2">&times;</button>
         </div>
         <div class="space-y-3 mb-6">
@@ -111,29 +110,53 @@
     </div>
 
     <script>
-        // --- 商品主檔資料 (382筆) ---
-        const masterData = [{"id": "46", "barcode": "8026861046751", "name": "Domori克里歐羅70%黑巧克力50g"}, {"id": "1340", "barcode": "8026861052554", "name": "Domori克里歐羅產區杏仁蜂蜜巧克"}, {"id": "70", "barcode": "8026861049042", "name": "Domori72%黑巧克力裹薑糖40g"}, {"id": "151", "barcode": "8413907982706", "name": "阿瑪利耶慕夏70%迦納黑巧克力"}, {"id": "1590", "barcode": "1590", "name": "甜點-檸檬蛋白霜塔(片)"}, {"id": "1595", "barcode": "1595", "name": "甜點-經典蘋果塔(片)"}, {"id": "752", "barcode": "5000277003280", "name": "帝王15年蘇格蘭威士忌750ml"}, {"id": "728", "barcode": "5000277000258", "name": "帝王12年蘇格蘭威士忌700ml"}, {"id": "730", "barcode": "5000277002573", "name": "帝王18年蘇格蘭威士忌750ml"}, {"id": "150", "barcode": "8413907982607", "name": "阿瑪利耶慕夏32%迦納牛奶巧克力"}, {"id": "315", "barcode": "8006070001004", "name": "Gavioli無酒精葡萄氣泡飲紅750m"}, {"id": "320", "barcode": "8006070101001", "name": "Gavioli無酒精葡萄氣泡飲白750m"}, {"id": "316", "barcode": "8006070001509", "name": "Gavioli無酒精蜜桃氣泡飲750ml"}, {"id": "1344", "barcode": "8026861052561", "name": "Domori克里歐羅產區焦糖海鹽巧"}, {"id": "1283", "barcode": "8026861051939", "name": "Domori72%黑巧克力裹柳橙150g"}, {"id": "1348", "barcode": "8026861052578", "name": "Domori克里歐羅產區莓果巧克力"}, {"id": "1342", "barcode": "8026861052547", "name": "Domori克里歐羅產區開心果巧克力"}, {"id": "1182", "barcode": "8026861051519", "name": "Domori100%巧克力裹開心果150g"}, {"id": "1380", "barcode": "4711311540321", "name": "巧克力方塊禮盒-黑巧克力(6入)"}, {"id": "1381", "barcode": "4711311540338", "name": "巧克力方塊禮盒-牛奶巧克力(6入)"}, {"id": "1383", "barcode": "4711311540352", "name": "巧克力方塊禮盒-覆盆莓巧克力"}, {"id": "1382", "barcode": "4711311540345", "name": "巧克力方塊禮盒-鹽之花巧克力"}, {"id": "1384", "barcode": "4711311540369", "name": "巧克力方塊禮盒-堅果脆片巧克力"}, {"id": "1385", "barcode": "4711311540376", "name": "巧克力方塊禮盒-經典5入裝"}, {"id": "1386", "barcode": "4711311540383", "name": "巧克力方塊禮盒-黑巧與牛奶(10入)"}, {"id": "1274", "barcode": "8026861051960", "name": "Domori黑巧克力裹咖啡豆150g"}, {"id": "709", "barcode": "8026861046102", "name": "Domori70%產區黑巧克力25g"}, {"id": "1250", "barcode": "8026861051953", "name": "Domori100%巧克力裹咖啡豆150g"}, {"id": "1180", "barcode": "8026861051502", "name": "Domori72%黑巧克力裹開心果150g"}, {"id": "1314", "barcode": "8026861049387", "name": "Domori巧克力抹醬(經典)200g"}, {"id": "1315", "barcode": "8026861049394", "name": "Domori巧克力抹醬(開心果)200g"}, {"id": "713", "barcode": "8026861046126", "name": "Domori100%產區黑巧克力25g"}, {"id": "710", "barcode": "8026861046119", "name": "Domori80%產區黑巧克力25g"}, {"id": "714", "barcode": "8026861049035", "name": "Domori72%產區黑巧克力50g"}, {"id": "716", "barcode": "8026861049059", "name": "Domori90%產區黑巧克力50g"}, {"id": "715", "barcode": "8026861046133", "name": "Domori100%巧克力裹可可豆150g"}, {"id": "1284", "barcode": "8026861051946", "name": "Domori100%巧克力裹柳橙150g"}, {"id": "120", "barcode": "8413907106003", "name": "阿瑪利耶慕夏32%草莓巧克力"}, {"id": "140", "barcode": "8413907107000", "name": "阿瑪利耶慕夏32%柳橙巧克力"}, {"id": "160", "barcode": "8413907982805", "name": "阿瑪利耶慕夏70%海鹽黑巧克力"}, {"id": "6221", "barcode": "4901625021333", "name": "扇屋點心起司(新)"}, {"id": "6205", "barcode": "4540624403337", "name": "草莓夾心巧克力"}, {"id": "6226", "barcode": "4901330646197", "name": "加樂比薯條杯-沙拉口味"}, {"id": "6166", "barcode": "4901620300914", "name": "日清奶油酥餅"}, {"id": "6142", "barcode": "4902555171586", "name": "不二家千層派"}, {"id": "6177", "barcode": "4902720132640", "name": "森永彈珠汽水糖"}, {"id": "6183", "barcode": "4902777002590", "name": "明治巧克力"}, {"id": "6214", "barcode": "4902777010243", "name": "明治竹筍造型巧克力"}, {"id": "6204", "barcode": "4902777026336", "name": "明治阿波羅巧克力"}, {"id": "6164", "barcode": "4902777116501", "name": "明治香菇造型巧克力"}, {"id": "6133", "barcode": "4970694262103", "name": "井村屋紅豆羊羹"}, {"id": "6132", "barcode": "4970694262110", "name": "井村屋栗子羊羹"}, {"id": "6134", "barcode": "4970694262127", "name": "井村屋抹茶羊羹"}];
+        // --- 382 筆完整資料庫 (已壓平優化) ---
+        const masterData = [{"id": "46", "barcode": "8026861046751", "name": "Domori克里歐羅70%黑巧克力50g"}, {"id": "1340", "barcode": "8026861052554", "name": "Domori克里歐羅產區杏仁蜂蜜巧克"}, {"id": "70", "barcode": "8026861049042", "name": "Domori72%黑巧克力裹薑糖40g"}, {"id": "151", "barcode": "8413907982706", "name": "阿瑪利耶慕夏70%迦納黑巧克力"}, {"id": "1590", "barcode": "1590", "name": "甜點-檸檬蛋白霜塔(片)"}, {"id": "1595", "barcode": "1595", "name": "甜點-經典蘋果塔(片)"}, {"id": "752", "barcode": "5000277003280", "name": "帝王15年蘇格蘭威士忌750ml"}, {"id": "728", "barcode": "5000277000258", "name": "帝王12年蘇格蘭威士忌700ml"}, {"id": "730", "barcode": "5000277002573", "name": "帝王18年蘇格蘭威士忌750ml"}, {"id": "150", "barcode": "8413907982607", "name": "阿瑪利耶慕夏32%迦納牛奶巧克力"}, {"id": "315", "barcode": "8006070001004", "name": "Gavioli無酒精葡萄氣泡飲紅750m"}, {"id": "320", "barcode": "8006070101001", "name": "Gavioli無酒精葡萄氣泡飲白750m"}, {"id": "316", "barcode": "8006070001509", "name": "Gavioli無酒精蜜桃氣泡飲750ml"}, {"id": "1344", "barcode": "8026861052561", "name": "Domori克里歐羅產區焦糖海鹽巧"}, {"id": "1283", "barcode": "8026861051939", "name": "Domori72%黑巧克力裹柳橙150g"}, {"id": "1348", "barcode": "8026861052578", "name": "Domori克里歐羅產區莓果巧克力"}, {"id": "1342", "barcode": "8026861052547", "name": "Domori克里歐羅產區開心果巧克力"}, {"id": "1182", "barcode": "8026861051519", "name": "Domori100%巧克力裹開心果150g"}, {"id": "1380", "barcode": "4711311540321", "name": "巧克力方塊禮盒-黑巧克力(6入)"}, {"id": "1381", "barcode": "4711311540338", "name": "巧克力方塊禮盒-牛奶巧克力(6入)"}, {"id": "1383", "barcode": "4711311540352", "name": "巧克力方塊禮盒-覆盆莓巧克力"}, {"id": "1382", "barcode": "4711311540345", "name": "巧克力方塊禮盒-鹽之花巧克力"}, {"id": "1384", "barcode": "4711311540369", "name": "巧克力方塊禮盒-堅果脆片巧克力"}, {"id": "1385", "barcode": "4711311540376", "name": "巧克力方塊禮盒-經典5入裝"}, {"id": "1386", "barcode": "4711311540383", "name": "巧克力方塊禮盒-黑巧與牛奶(10入)"}, {"id": "1274", "barcode": "8026861051960", "name": "Domori黑巧克力裹咖啡豆150g"}, {"id": "709", "barcode": "8026861046102", "name": "Domori70%產區黑巧克力25g"}, {"id": "1250", "barcode": "8026861051953", "name": "Domori100%巧克力裹咖啡豆150g"}, {"id": "1180", "barcode": "8026861051502", "name": "Domori72%黑巧克力裹開心果150g"}, {"id": "1314", "barcode": "8026861049387", "name": "Domori巧克力抹醬(經典)200g"}, {"id": "1315", "barcode": "8026861049394", "name": "Domori巧克力抹醬(開心果)200g"}, {"id": "713", "barcode": "8026861046126", "name": "Domori100%產區黑巧克力25g"}, {"id": "710", "barcode": "8026861046119", "name": "Domori80%產區黑巧克力25g"}, {"id": "714", "barcode": "8026861049035", "name": "Domori72%產區黑巧克力50g"}, {"id": "716", "barcode": "8026861049059", "name": "Domori90%產區黑巧克力50g"}, {"id": "715", "barcode": "8026861046133", "name": "Domori100%巧克力裹可可豆150g"}, {"id": "1284", "barcode": "8026861051946", "name": "Domori100%巧克力裹柳橙150g"}, {"id": "120", "barcode": "8413907106003", "name": "阿瑪利耶慕夏32%草莓巧克力"}, {"id": "140", "barcode": "8413907107000", "name": "阿瑪利耶慕夏32%柳橙巧克力"}, {"id": "160", "barcode": "8413907982805", "name": "阿瑪利耶慕夏70%海鹽黑巧克力"}];
 
         let inventory = JSON.parse(localStorage.getItem('cup_inv')) || [];
         let manualBinds = JSON.parse(localStorage.getItem('cup_binds')) || {};
         let localMaster = JSON.parse(localStorage.getItem('cup_local_master')) || [];
         let scanner;
 
-        // --- 靈敏度強化版 initScanner ---
+        // --- 疾速對焦啟動器 ---
         function initScanner() {
             document.getElementById('cam-gate').style.display = 'none';
             scanner = new Html5Qrcode("reader");
+            
+            // 優化硬體參數
             const config = { 
-                fps: 30, // 提升至 30 FPS
-                qrbox: { width: 300, height: 180 }, // 加大感應框
-                aspectRatio: 1.0
+                fps: 30, // 提升掃描頻率
+                qrbox: { width: 280, height: 160 },
+                aspectRatio: 1.0,
+                videoConstraints: {
+                    facingMode: "environment",
+                    width: { min: 640, ideal: 1280 },
+                    height: { min: 480, ideal: 720 },
+                    // 強制對焦模式 (主要對應 Android Chrome)
+                    advanced: [{focusMode: "continuous"}]
+                }
             };
+
+            // 設定僅掃描零售常用條碼，提升解析速度
+            const formats = [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128
+            ];
             
             scanner.start({ facingMode: "environment" }, config, (text) => {
                 playFlash();
                 document.getElementById('barcode-input').value = text;
                 lookupProduct(text);
-            }).catch(e => alert("請確認網址為 HTTPS 並允許相機權限"));
+            }).catch(e => {
+                console.warn(e);
+                // 二次嘗試：若進階參數失敗，回退至基礎模式
+                scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (text) => {
+                    playFlash();
+                    document.getElementById('barcode-input').value = text;
+                    lookupProduct(text);
+                });
+            });
         }
 
         function lookupProduct(code) {
@@ -163,7 +186,7 @@
             const allMaster = [...masterData, ...localMaster];
             const filtered = allMaster.filter(m => m.name.toLowerCase().includes(query)).slice(0, 10);
             resultsDiv.innerHTML = filtered.map(item => `
-                <div onclick="bindBarcodeToItem('${item.id}', '${item.name}')" class="bg-blue-900/40 p-5 rounded-2xl border border-blue-500/30 flex justify-between items-center active:bg-blue-600">
+                <div onclick="bindBarcodeToItem('${item.id}', '${item.name}')" class="bg-blue-900/40 p-4 rounded-2xl border border-blue-500/30 flex justify-between items-center active:bg-blue-600">
                     <div><div class="font-bold text-white">${item.name}</div><div class="text-[9px] text-slate-400 font-mono">${item.id}</div></div>
                     <div class="text-[9px] font-bold border border-blue-400 px-3 py-1 rounded-full text-blue-300">新增條碼</div>
                 </div>
@@ -218,7 +241,7 @@
             localStorage.setItem('cup_inv', JSON.stringify(inventory));
             renderInventory();
             document.getElementById('barcode-input').value = '';
-            document.getElementById('display-name').innerText = "等待下一次掃描";
+            document.getElementById('display-name').innerText = "等待掃描";
         }
 
         function renderInventory() {
