@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CUPICHO PRO V4.3</title>
+    <title>CUPICHO PRO V4.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        body { background-color: #020617; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #020617; color: #f8fafc; -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
         #reader { border: none !important; background: #000; height: 100%; width: 100%; }
         .modal-view { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); backdrop-filter: blur(20px); z-index: 9999; flex-direction: column; padding: 24px; }
         .show-modal { display: flex !important; animation: slideUp 0.3s ease-out; }
@@ -16,6 +16,8 @@
         .btn-gold { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; font-weight: 800; }
         .flash-active { animation: flash 0.3s ease-out; }
         @keyframes flash { 0% { background: rgba(251, 191, 36, 0.5); } 100% { background: transparent; } }
+        /* 掃描線動畫 */
+        @keyframes laser { 0% { top: 15%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 85%; opacity: 0; } }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen flex flex-col">
@@ -25,11 +27,11 @@
     <header class="p-4 flex justify-between items-center bg-slate-950 border-b border-slate-900 sticky top-0 z-[100]">
         <div>
             <h1 class="text-xl font-black text-yellow-500 italic leading-none">CUPICHO</h1>
-            <p id="db-status" class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">系統準備中</p>
+            <p id="db-status" class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">系統就緒</p>
         </div>
         <div class="flex gap-2">
-            <button id="torch-btn" onclick="toggleTorch()" class="hidden bg-slate-800 text-yellow-500 px-3 py-2 rounded-xl border border-slate-700 text-xs font-bold">🔦</button>
-            <button onclick="openAdmin()" class="bg-slate-900 text-slate-400 px-3 py-2 rounded-xl border border-slate-800 text-xs font-bold font-mono">⚙️</button>
+            <button id="torch-btn" onclick="toggleTorch()" class="hidden bg-slate-800 text-yellow-500 px-3 py-2 rounded-xl border border-slate-700 text-xs font-bold">🔦 補光</button>
+            <button onclick="openAdmin()" class="bg-slate-900 text-slate-400 px-3 py-2 rounded-xl border border-slate-800 text-xs">⚙️ 管理</button>
         </div>
     </header>
 
@@ -40,18 +42,27 @@
                 📷 啟動極速掃描
             </button>
         </div>
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div class="w-[280px] h-[180px] border-2 border-yellow-500/20 rounded-3xl relative">
+                <div class="absolute -top-1 -left-1 w-10 h-10 border-t-4 border-l-4 border-yellow-500 rounded-tl-2xl"></div>
+                <div class="absolute -top-1 -right-1 w-10 h-10 border-t-4 border-r-4 border-yellow-500 rounded-tr-2xl"></div>
+                <div class="absolute -bottom-1 -left-1 w-10 h-10 border-b-4 border-l-4 border-yellow-500 rounded-bl-2xl"></div>
+                <div class="absolute -bottom-1 -right-1 w-10 h-10 border-b-4 border-r-4 border-yellow-500 rounded-br-2xl"></div>
+                <div class="absolute left-2 right-2 h-[1.5px] bg-yellow-400 shadow-[0_0_15px_#facc15] animate-[laser_2.5s_infinite]"></div>
+            </div>
+        </div>
     </section>
 
     <section class="p-4 -mt-10 relative z-30">
-        <div class="bg-slate-900/90 border border-slate-800 rounded-[32px] p-6 shadow-2xl backdrop-blur-md">
+        <div class="bg-slate-900/95 border border-slate-800 rounded-[32px] p-6 shadow-2xl backdrop-blur-md">
             <div class="text-center mb-6 border-b border-slate-800 pb-4">
                 <div id="display-name" class="text-lg font-bold text-white mb-1">等待掃描</div>
-                <div id="display-id" class="text-xs text-yellow-600 font-mono tracking-widest italic">---</div>
+                <div id="display-id" class="text-xs text-yellow-600 font-mono tracking-widest uppercase italic">---</div>
             </div>
             <div class="grid grid-cols-4 gap-3">
-                <input type="text" id="barcode-input" class="col-span-3 bg-black border border-slate-700 rounded-2xl p-4 text-white font-mono outline-none focus:border-yellow-500" placeholder="條碼編號">
+                <input type="text" id="barcode-input" oninput="handleManualInput(this.value)" class="col-span-3 bg-black border border-slate-700 rounded-2xl p-4 text-white font-mono outline-none focus:border-yellow-500" placeholder="條碼編號">
                 <input type="number" id="qty-input" value="1" class="col-span-1 bg-black border border-slate-700 rounded-2xl p-4 text-2xl font-black text-center text-yellow-500 outline-none">
-                <button onclick="addRecord()" class="col-span-4 btn-gold py-5 rounded-2xl active:scale-95 text-xl shadow-lg">確認送出</button>
+                <button onclick="addRecord()" class="col-span-4 btn-gold py-5 rounded-2xl active:scale-95 text-xl shadow-lg transition-all">確認送出</button>
             </div>
         </div>
     </section>
@@ -63,45 +74,35 @@
     <div class="fixed bottom-6 left-6 right-6 flex gap-3 z-[100]">
         <button onclick="clearAll()" class="bg-slate-900 border border-slate-800 text-slate-500 px-6 py-4 rounded-3xl text-[10px] font-bold">RESET</button>
         <div class="flex-1 bg-yellow-500 p-4 rounded-3xl flex justify-between items-center px-8 shadow-xl">
-            <span class="text-black font-bold text-xs uppercase">Items</span>
-            <span id="total-count" class="text-2xl font-black text-black leading-none">0</span>
+            <span class="text-black font-bold text-xs uppercase">Total</span>
+            <span id="total-count" class="text-2xl font-black text-black">0</span>
             <button onclick="exportCSV()" class="ml-4 bg-black text-yellow-500 px-3 py-1 rounded-lg text-[10px] font-black">匯出</button>
         </div>
     </div>
 
     <div id="admin-modal" class="modal-view">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-white">⚙️ 系統管理</h3>
-            <button onclick="closeModal('admin-modal')" class="text-slate-500 text-4xl">&times;</button>
+            <h3 class="text-xl font-bold text-white italic">⚙️ 系統管理</h3>
+            <button onclick="closeModal('admin-modal')" class="text-slate-500 text-4xl p-2">&times;</button>
         </div>
-        
         <div class="bg-emerald-900/20 border border-emerald-500/30 p-6 rounded-[24px] mb-6 text-center">
-            <h4 class="text-emerald-500 font-bold mb-2">批次匯入商品主檔</h4>
-            <p class="text-[10px] text-slate-400 mb-4 text-left">請選擇您的 CSV 檔案，系統會自動更新資料庫。</p>
+            <h4 class="text-emerald-500 font-bold mb-2">更新資料庫</h4>
             <input type="file" id="csv-file" accept=".csv" class="hidden" onchange="importMasterCSV(event)">
-            <button onclick="document.getElementById('csv-file').click()" class="bg-emerald-600 text-white w-full py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-all">
-                📁 選擇 CSV 檔案
-            </button>
+            <button onclick="document.getElementById('csv-file').click()" class="bg-emerald-600 text-white w-full py-4 rounded-xl font-bold shadow-lg">📁 匯入 Mst003 CSV</button>
         </div>
-
-        <div class="flex-1 overflow-y-auto space-y-3">
-            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">目前資料庫狀態</p>
-            <div id="db-info-card" class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs text-slate-400">
-                尚未載入資料
-            </div>
-            <button onclick="if(confirm('確定清除資料庫？')) { localStorage.removeItem('cup_master'); location.reload(); }" class="text-red-900 text-[10px] font-bold p-2">清除所有商品資料庫</button>
-        </div>
+        <div id="db-info-card" class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs text-slate-400 mb-4">尚未載入</div>
+        <button onclick="if(confirm('確定重置？')) { localStorage.clear(); location.reload(); }" class="w-full text-red-900 text-xs font-bold py-2 border border-red-900/20 rounded-xl">重置所有系統快取</button>
     </div>
 
     <div id="bind-modal" class="modal-view">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-bold text-white italic">⚠️ 找不到條碼</h3>
-            <button onclick="closeModal('bind-modal')" class="text-slate-400 text-4xl">&times;</button>
+            <button onclick="closeModal('bind-modal')" class="text-slate-400 text-4xl p-2">&times;</button>
         </div>
         <div class="bg-yellow-500/10 border border-yellow-500/30 p-5 rounded-2xl mb-6 text-center">
             <p id="unknown-barcode-display" class="text-2xl font-mono font-bold text-white"></p>
         </div>
-        <input type="text" id="bind-search-input" oninput="filterBindSearch()" class="w-full bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-6 text-white outline-none" placeholder="搜尋品名綁定...">
+        <input type="text" id="bind-search-input" oninput="filterBindSearch()" class="w-full bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-6 text-white" placeholder="搜尋品名綁定...">
         <div id="bind-results" class="flex-1 overflow-y-auto space-y-2 mb-4"></div>
     </div>
 
@@ -110,63 +111,77 @@
         let inventory = JSON.parse(localStorage.getItem('cup_inv')) || [];
         let manualBinds = JSON.parse(localStorage.getItem('cup_binds')) || {};
         let scanner;
+        let isTorchOn = false;
 
-        window.onload = () => {
-            updateDBStatus();
-            renderInventory();
-        };
+        window.onload = () => { updateDBStatus(); renderInventory(); };
 
         function updateDBStatus() {
             const count = masterData.length;
             document.getElementById('db-status').innerText = `Database: ${count} Items`;
-            document.getElementById('db-info-card').innerText = `目前資料庫中共有 ${count} 筆商品資料。`;
+            document.getElementById('db-status').classList.toggle('text-emerald-500', count > 0);
+            document.getElementById('db-info-card').innerText = `目前資料庫中共有 ${count} 筆商品。`;
         }
 
-        // --- 核心匯入功能 ---
-        function importMasterCSV(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    const data = results.data;
-                    // 自動對應欄位 (相容您的 CSV 格式)
-                    const formatted = data.map(item => ({
-                        id: item['商品碼'] || item['id'] || '0',
-                        name: item['商品名稱規格'] || item['name'] || '未知商品',
-                        barcode: String(item['條碼'] || item['barcode']).replace(/\s+/g, '')
-                    })).filter(item => item.barcode);
-
-                    if (formatted.length > 0) {
-                        masterData = formatted;
-                        localStorage.setItem('cup_master', JSON.stringify(masterData));
-                        updateDBStatus();
-                        alert(`成功匯入 ${formatted.length} 筆商品！`);
-                        closeModal('admin-modal');
-                    } else {
-                        alert("匯入失敗，請檢查 CSV 欄位是否包含「條碼」與「商品名稱規格」。");
-                    }
-                }
-            });
-        }
-
+        // --- 核心：極速掃描引擎 ---
         async function initScanner() {
             document.getElementById('cam-gate').style.display = 'none';
             scanner = new Html5Qrcode("reader");
-            const config = { fps: 30, qrbox: { width: 280, height: 160 }, aspectRatio: 1.0 };
+            const config = { 
+                fps: 30, 
+                qrbox: { width: 280, height: 160 },
+                aspectRatio: 1.0,
+                videoConstraints: {
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    advanced: [{ focusMode: "continuous" }]
+                }
+            };
+            
+            // 限制條碼格式以提升解析速度
+            const formats = [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128];
+
             await scanner.start({ facingMode: "environment" }, config, (text) => {
                 playFlash();
-                document.getElementById('barcode-input').value = text;
-                lookupProduct(text);
+                const code = String(text).trim();
+                document.getElementById('barcode-input').value = code;
+                lookupProduct(code);
+            });
+
+            const track = scanner.getVideoTrack();
+            if (track && track.getCapabilities().torch) document.getElementById('torch-btn').classList.remove('hidden');
+        }
+
+        async function toggleTorch() {
+            if (!scanner) return;
+            isTorchOn = !isTorchOn;
+            await scanner.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] });
+            document.getElementById('torch-btn').innerText = isTorchOn ? "🚫 關閉" : "🔦 補光";
+        }
+
+        // --- 核心：CSV 匯入 ---
+        function importMasterCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: function(res) {
+                    masterData = res.data.map(i => ({
+                        id: String(i['商品碼'] || i['id'] || '0'),
+                        name: String(i['商品名稱規格'] || i['name'] || '未知'),
+                        barcode: String(i['條碼'] || i['barcode']).replace(/\s+/g, '').replace(/\.0$/, '')
+                    })).filter(i => i.barcode);
+                    localStorage.setItem('cup_master', JSON.stringify(masterData));
+                    updateDBStatus();
+                    alert(`成功匯入 ${masterData.length} 筆資料！`);
+                    closeModal('admin-modal');
+                }
             });
         }
 
         function lookupProduct(code) {
             const cleanCode = String(code).trim();
             const found = masterData.find(m => String(m.barcode) === cleanCode) || manualBinds[cleanCode];
-            
             if (found) {
                 document.getElementById('display-name').innerText = found.name;
                 document.getElementById('display-id').innerText = "ID: " + found.id;
@@ -180,20 +195,21 @@
             }
         }
 
+        function handleManualInput(v) { if (v.length >= 5) lookupProduct(v); }
+
         function filterBindSearch() {
-            const query = document.getElementById('bind-search-input').value.toLowerCase();
-            const resultsDiv = document.getElementById('bind-results');
-            if (query.length < 1) return resultsDiv.innerHTML = '';
-            const filtered = masterData.filter(m => m.name.toLowerCase().includes(query)).slice(0, 10);
-            resultsDiv.innerHTML = filtered.map(item => `<div onclick="bindBarcodeToItem('${item.id}', '${item.name}')" class="bg-blue-900/40 p-4 rounded-2xl border border-blue-500/30 flex justify-between items-center mb-1"><div><div class="font-bold text-white text-sm">${item.name}</div><div class="text-[9px] text-slate-400">${item.id}</div></div><div class="text-[9px] font-bold border border-blue-400 px-3 py-1 rounded-full text-blue-300">綁定</div></div>`).join('');
+            const q = document.getElementById('bind-search-input').value.toLowerCase();
+            const res = document.getElementById('bind-results');
+            if (q.length < 1) return res.innerHTML = '';
+            const filtered = masterData.filter(m => m.name.toLowerCase().includes(q)).slice(0, 10);
+            res.innerHTML = filtered.map(i => `<div onclick="bindItem('${i.id}', '${i.name}')" class="bg-blue-900/40 p-4 rounded-2xl border border-blue-500/30 flex justify-between items-center mb-1"><div><div class="font-bold text-white text-sm">${i.name}</div><div class="text-[9px] text-slate-400">${i.id}</div></div><div class="text-[9px] font-bold border border-blue-400 px-3 py-1 rounded-full text-blue-300">綁定</div></div>`).join('');
         }
 
-        function bindBarcodeToItem(id, name) {
+        function bindItem(id, name) {
             const code = document.getElementById('unknown-barcode-display').innerText;
             manualBinds[code] = { id, name };
             localStorage.setItem('cup_binds', JSON.stringify(manualBinds));
-            closeModal('bind-modal');
-            lookupProduct(code);
+            closeModal('bind-modal'); lookupProduct(code);
         }
 
         function addRecord() {
@@ -203,9 +219,7 @@
             const item = masterData.find(m => String(m.barcode) === code) || manualBinds[code] || { id: "NEW", name: "未知商品" };
             inventory.unshift({ ...item, barcode: code, qty, time: new Date().toLocaleTimeString() });
             localStorage.setItem('cup_inv', JSON.stringify(inventory));
-            renderInventory();
-            document.getElementById('barcode-input').value = '';
-            document.getElementById('display-name').innerText = "等待掃描";
+            renderInventory(); document.getElementById('barcode-input').value = ''; document.getElementById('display-name').innerText = "等待下一個...";
         }
 
         function renderInventory() {
@@ -216,7 +230,7 @@
         function playFlash() { const f = document.getElementById('flash-overlay'); f.classList.add('flash-active'); setTimeout(() => f.classList.remove('flash-active'), 300); if (navigator.vibrate) navigator.vibrate(80); }
         function closeModal(id) { document.getElementById(id).classList.remove('show-modal'); }
         function openAdmin() { document.getElementById('admin-modal').classList.add('show-modal'); }
-        function clearAll() { if(confirm("確定清空？")) { inventory = []; localStorage.setItem('cup_inv',JSON.stringify(inventory)); renderInventory(); } }
+        function clearAll() { if(confirm("確定清空？")) { inventory = []; localStorage.setItem('cup_inv', JSON.stringify(inventory)); renderInventory(); } }
         function exportCSV() {
             let csv = "\ufeff貨號,品名,條碼,數量,時間\n";
             inventory.forEach(i => csv += `"${i.id}","${i.name}","${i.barcode}",${i.qty},"${i.time}"\n`);
